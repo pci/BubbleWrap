@@ -130,7 +130,7 @@ function BubbleWrap(bubbles, maincanvasid){
    
    this.draw = function() {
    		// clear the canvas
-        this.maincanvas.width = this.maincanvas.width;
+        this.ctx.clearRect(0,0,this.maincanvas.width, this.maincanvas.height);
         for(var i in this.bubbles){
             this.bubbles[i].draw(maincanvas);
         }
@@ -141,6 +141,7 @@ function BubbleWrap(bubbles, maincanvasid){
    		var forcesum;
    		var df = new Vector2D(0,0);
    		var bi,bj;
+   		var kave, lave;
    		for(var i=0;i<this.bubbles.length;i++) bubbles[i].f.setV(0,0);
    		
    		for(var i=0;i<this.bubbles.length;i++){
@@ -152,20 +153,26 @@ function BubbleWrap(bubbles, maincanvasid){
    					//this.ctx.strokeRect(overlap[0][0],overlap[0][1],overlap[1][0]-overlap[0][0],overlap[1][1]-overlap[0][1]);
    					
    					forcesum = 0;
+   					kave = lave = 0;
    					
    					for(var k=overlap[0][0]; k<overlap[1][0]; k++){
    						for(var l=overlap[0][1]; l<overlap[1][1]; l++){
    							if(bi.usedPoint(k,l) && bj.usedPoint(k,l)) {
    								// clash point
    								forcesum++;
+   								kave += k;
+   								lave += l;
    								//this.ctx.fillRect(k-0.5,l-0.5,1,1);
    							}
    						}
    					}
-   					df.setV((bi.left+bi.mywidth/2)-(bj.left+bj.mywidth/2),(bi.top+bi.myheight/2)-(bj.top+bj.myheight/2));
+   					if(forcesum == 0) continue;
+   					df.setV((bi.left+bi.mywidth/2)-kave/forcesum,(bi.top+bi.myheight/2)-lave/forcesum);
    					df.normalize();
-   					bi.f.addEquals(df.mult(10*forcesum/bi.weight));
-   					bj.f.addEquals(df.mult(-10*forcesum/bj.weight));
+   					bi.f.addEquals(df.mult(50*forcesum/bi.weight));
+   					df.setV((bj.left+bj.mywidth/2)-kave/forcesum,(bj.top+bj.myheight/2)-lave/forcesum);
+   					df.normalize();
+   					bj.f.addEquals(df.mult(50*forcesum/bj.weight));
    				}
    			}
         }
@@ -180,6 +187,6 @@ function BubbleWrap(bubbles, maincanvasid){
         
         this.damping *= 0.99;
         this.draw();
-        if(this.damping > 0.02) this.timer = setInterval(this.iterate(),1000);
+        if(this.damping > 0.02) this.timer = setInterval(this.iterate(),30);
    }
 };
