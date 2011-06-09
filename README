@@ -1,0 +1,3 @@
+# Placeholder For A Readme
+
+BubbleWrap.js takes a list of mini-canvas' and one large canvas and seeks to arrange the mini-canvas' in a nice compact way. E.g. A word cloud where the input canvas' are words written in interesting fonts and colours, like comic sans MS in day-glow pink :)
