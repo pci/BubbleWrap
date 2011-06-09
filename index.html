@@ -1,0 +1,142 @@
+<html>
+   <head>
+      <meta http-equiv="Content-type" content="text/html; charset=utf-8">
+      <title>Canvas + @font-face</title>
+      
+   
+      <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.5/jquery.js"></script>
+
+      <script src="./bubblewrap.js"></script>
+      <script type="text/javascript" charset="utf-8"> 
+      function shrinkcanvastotext(canvas, txt, textstyle, colour){
+      		var cn = canvas.getContext('2d');
+      		var minwidth,minheight=0;
+      		var i,j;
+      		if (colour === undefined) {
+				colour = "black";
+			}
+      		
+      		// calc width and resize:
+      		cn.font = textstyle;
+      		minwidth = cn.measureText(txt).width;
+      		canvas.width = minwidth;
+      		
+      		// paint for the height finder
+      		cn.textAlign = "left";
+			cn.textBaseline = "top";
+			cn.fillStyle = colour;
+      		cn.font = textstyle;
+			cn.fillText(txt, 0, 0);
+      		
+      		// calc bounding height
+      		// imageData[0] - pixel0's red
+      		// imageData[1] - pixel0's blue
+      		// imageData[2] - pixel0's green
+      		// imageData[3] - pixel0's alpha
+      		var imageData = cn.getImageData(0, 0, minwidth, canvas.height);
+      		for(i=0;i<minwidth;i++){
+      			for(j=minheight;j<canvas.height;j++){
+      				if(imageData.data[4*(minwidth*j+i)+3] != 0){
+      					minheight = j;
+      				} 
+      			}
+      		}
+      		
+      		
+      		// resize and repaint
+      		canvas.height = minheight;
+      		cn.textAlign = "left";
+			cn.textBaseline = "top";
+			cn.fillStyle = colour;
+      		cn.font = textstyle;
+			cn.fillText(txt, 0, 0);
+      }
+            
+      function drawthings(){	
+      		var textentries = ["first!", "yay first!", "....idiots", "hi mom!", "WOOT"];
+      		var i;
+      		var bubbles = [];
+      		
+      		// Create the bubble list
+      		for(i=0;i<textentries.length;i++){
+      			$("#minicanvaslist").append("<li><canvas width='600' height='200' class='minicanvas' id='minicanvas"+i+"'></canvas></li>");
+      			shrinkcanvastotext($('#minicanvas'+i)[0], textentries[i], (20+Math.floor(Math.random()*50))+"px 'Cabin Sketch'", "rgb("+Math.floor(Math.random()*256)+","+Math.floor(Math.random()*256)+","+Math.floor(Math.random()*256)+")");
+      			// Create a new bubble
+      			bubbles[i] = new Bubble(Math.floor(Math.random()*300), Math.floor(Math.random()*400), 'minicanvas'+i)
+      		}
+			
+			var bw = new BubbleWrap(bubbles, 'maincanvas');
+			
+			bw.draw();
+      	
+      		$('#iteratebutton').click(function() {bw.iterate();});
+      };
+      </script>
+      
+      <style type="text/css">
+         body {
+            background: #fff;
+         }
+         
+         h2 {font-family: 'Cabin Sketch', arial, serif; text-size: 24pt;}
+         
+         #maincanvas {
+         	position: relative;
+         	float: left;
+         	border: 1px black solid
+         }
+         
+         #coolstuff {
+         	position:relative;
+         	width:900px;
+         	margin: 0 auto;
+         }
+         
+         #minicanvasholder {
+         	position:relative;
+         	float:left;
+         	height:600px;
+         	width:390px;
+         	overflow:auto;
+         }
+         
+         #minicanvaslist {
+            list-style:none;
+         }
+      </style>
+   </head>
+   
+   <body>
+   	  <div id="coolstuff">
+      	<canvas width="500" height="500" id="maincanvas"></canvas>
+      	<div id="minicanvasholder"><ul id="minicanvaslist"></ul></div>
+      </div>
+      <h2>Text test</h2>
+      <button id="iteratebutton">Iterate</button>
+      <script type="text/javascript">
+          WebFontConfig = {
+              google: { families: [ 'Cabin Sketch:bold' ] },
+              active: function() {
+            		$(document).ready(function(){
+        				$('h2').html('loaded!');
+        				// the setTimeout is a chrome fix (it seems to need some time to promagate the font)
+            			setTimeout("drawthings()",100);
+            		});
+              },
+              inactive: function() {
+        			$('h2').html('Everything went wrong!');
+              }
+            };
+            
+          (function() {
+            var wf = document.createElement('script');
+            wf.src = ('https:' == document.location.protocol ? 'https' : 'http') +
+                '://ajax.googleapis.com/ajax/libs/webfont/1/webfont.js';
+            wf.type = 'text/javascript';
+            wf.async = 'true';
+            var s = document.getElementsByTagName('script')[0];
+            s.parentNode.insertBefore(wf, s);
+          })();
+      </script>
+   </body>
+</html>
