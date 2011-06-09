@@ -73,8 +73,8 @@ function Bubble(x, y, canvasid){
        }
    }
    
-   this.draw = function(canvas) {      
-      var cx = canvas.getContext('2d');
+   this.draw = function(canvasid) {      
+      var cx = document.getElementById(canvasid).getContext('2d');
       
       cx.drawImage(this.ctx.canvas, this.left, this.top);
    }
@@ -127,13 +127,19 @@ function BubbleWrap(bubbles, maincanvasid){
    this.damping = 0.98;
    this.canvasCenter = new Vector2D(this.maincanvas.width / 2, this.maincanvas.height / 2);
    this.timer = null;
+   var that = this;
    
    this.draw = function() {
    		// clear the canvas
         this.ctx.clearRect(0,0,this.maincanvas.width, this.maincanvas.height);
         for(var i in this.bubbles){
-            this.bubbles[i].draw(maincanvas);
+            this.bubbles[i].draw(maincanvasid);
         }
+   }
+   
+   var callBack = function()
+   {
+        that.iterate();
    }
    
    this.iterate = function(){
@@ -169,10 +175,10 @@ function BubbleWrap(bubbles, maincanvasid){
    					if(forcesum == 0) continue;
    					df.setV((bi.left+bi.mywidth/2)-kave/forcesum,(bi.top+bi.myheight/2)-lave/forcesum);
    					df.normalize();
-   					bi.f.addEquals(df.mult(50*forcesum/bi.weight));
+   					//bi.f.addEquals(df.mult(50*forcesum/bi.weight));
    					df.setV((bj.left+bj.mywidth/2)-kave/forcesum,(bj.top+bj.myheight/2)-lave/forcesum);
    					df.normalize();
-   					bj.f.addEquals(df.mult(50*forcesum/bj.weight));
+   					//bj.f.addEquals(df.mult(50*forcesum/bj.weight));
    				}
    			}
         }
@@ -185,8 +191,8 @@ function BubbleWrap(bubbles, maincanvasid){
         	    bubbles[i].moveBy(bubbles[i].f);
         }
         
-        this.damping *= 0.99;
+        this.damping *= 0.98;
         this.draw();
-        if(this.damping > 0.02) this.timer = setInterval(this.iterate(),30);
+        if(this.damping > 0.02) this.timer = window.setTimeout(callBack,50);
    }
 };
