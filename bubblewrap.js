@@ -129,17 +129,17 @@ function BubbleWrap(bubbles, maincanvasid){
    this.timer = null;
    var that = this;
    
+   var callBack = function()
+   {
+        that.iterate();
+   }
+   
    this.draw = function() {
    		// clear the canvas
         this.ctx.clearRect(0,0,this.maincanvas.width, this.maincanvas.height);
         for(var i in this.bubbles){
             this.bubbles[i].draw(maincanvasid);
         }
-   }
-   
-   var callBack = function()
-   {
-        that.iterate();
    }
    
    this.iterate = function(){
