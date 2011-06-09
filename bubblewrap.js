@@ -136,6 +136,7 @@ function BubbleWrap(bubbles, maincanvasid){
    
    this.draw = function() {
    		// clear the canvas
+   	    this.maincanvas.width = this.maincanvas.width;
         this.ctx.clearRect(0,0,this.maincanvas.width, this.maincanvas.height);
         for(var i in this.bubbles){
             this.bubbles[i].draw(maincanvasid);
