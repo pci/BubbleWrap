@@ -18,6 +18,11 @@ function Vector2D(x, y){
       this.y = y;
    }
    
+   this.setVec = function(v){
+      this.x = v.x;
+      this.y = v.y;
+   }
+   
    this.drawline = function(x1,y1,x2,y2) {
    	  // line from p1 to p2
    	  this.x = x2-x1;
@@ -49,6 +54,11 @@ function Vector2D(x, y){
    	  this.x+=v2.x;
    	  this.y+=v2.y;
    }
+   
+   this.minusEquals = function(v2){
+   	  this.x-=v2.x;
+   	  this.y-=v2.y;
+   }
 };
 
 
@@ -63,7 +73,7 @@ function Bubble(x, y, canvasid){
    this.right = x+this.mywidth;
    this.bottom = y+this.myheight;
    this.data = this.ctx.getImageData(0,0,this.mywidth,this.myheight).data;
-   this.f = new Vector2D(0,0);
+   this.v = new Vector2D(0,0);
    this.weight = 0;
 
    // Calculate the weight
@@ -145,12 +155,20 @@ function BubbleWrap(bubbles, maincanvasid){
    
    this.iterate = function(){
    		var overlap;
-   		var forcesum;
-   		var df = new Vector2D(0,0);
+   		var clashpoints;
+   		var dv = new Vector2D(0,0);
    		var bi,bj;
    		var kave, lave;
-   		for(var i=0;i<this.bubbles.length;i++) bubbles[i].f.setV(0,0);
+   		var horz, vert;
    		
+        
+        for(var i=0;i<this.bubbles.length;i++) {
+        	    // gravity:
+        	    dv.setV(this.canvasCenter.x-(bubbles[i].left+bubbles[i].mywidth/2),this.canvasCenter.y-(bubbles[i].top+bubbles[i].myheight/2));
+        	    dv.normalize();
+        	    bubbles[i].v.addEquals(dv.mult(this.damping));
+        }
+        
    		for(var i=0;i<this.bubbles.length;i++){
    			bi = bubbles[i];
    			for(var j=i+1;j<this.bubbles.length;j++){
@@ -159,37 +177,58 @@ function BubbleWrap(bubbles, maincanvasid){
    				if(overlap !== null){
    					//this.ctx.strokeRect(overlap[0][0],overlap[0][1],overlap[1][0]-overlap[0][0],overlap[1][1]-overlap[0][1]);
    					
-   					forcesum = 0;
+   					clashpoints = [];
    					kave = lave = 0;
    					
    					for(var k=overlap[0][0]; k<overlap[1][0]; k++){
    						for(var l=overlap[0][1]; l<overlap[1][1]; l++){
    							if(bi.usedPoint(k,l) && bj.usedPoint(k,l)) {
    								// clash point
-   								forcesum++;
+   								clashpoints.push([k,l]);
    								kave += k;
    								lave += l;
    								//this.ctx.fillRect(k-0.5,l-0.5,1,1);
    							}
    						}
    					}
-   					if(forcesum == 0) continue;
-   					df.setV((bi.left+bi.mywidth/2)-kave/forcesum,(bi.top+bi.myheight/2)-lave/forcesum);
-   					df.normalize();
-   					//bi.f.addEquals(df.mult(50*forcesum/bi.weight));
-   					df.setV((bj.left+bj.mywidth/2)-kave/forcesum,(bj.top+bj.myheight/2)-lave/forcesum);
-   					df.normalize();
-   					//bj.f.addEquals(df.mult(50*forcesum/bj.weight));
+   					if(clashpoints.length == 0) continue;
+   					
+   					kave = kave/clashpoints.length;
+   					lave = lave/clashpoints.length;
+   					horz = vert = 0;
+   					
+   					for(var i=0;i<clashpoints.length;i++){
+   					    horz += (clashpoints[i][0] - kave)*(clashpoints[i][0] - kave);
+   					    vert += (clashpoints[i][1] - lave)*(clashpoints[i][1] - lave);
+   					}
+   					
+   					// store second bubbles' velocity
+   					dv.setVec(bj.v);
+   					// change frame of reference
+   					bi.v.minusEquals(dv);
+   					bj.v.minusEquals(dv);
+   					// apply new changes (currently purely elastic collisions)
+   					if(horz > vert) {
+   					    // horizontal collision line - vertical collision detected!
+   					    bj.v.y = (2*bi.weight*bi.v.y)/(bj.weight+bi.weight);
+   					    bi.v.y = bi.v.y - (bj.weight/bi.weight)*bj.v.y;
+   					} else {
+   					    // vertical collision line - horizontal collision detected!
+   					    bj.v.x = (2*bi.weight*bi.v.x)/(bj.weight+bi.weight);
+   					    bi.v.x = bi.v.x - (bj.weight/bi.weight)*bj.v.x;
+   					}
+   					// restore frame of reference
+					bi.v.addEquals(dv);
+					bj.v.addEquals(dv);
    				}
    			}
         }
         
-        for(var i=0;i<this.bubbles.length;i++) {
-        	    // gravity:
-        	    df.setV(this.canvasCenter.x-(bubbles[i].left+bubbles[i].mywidth/2),this.canvasCenter.y-(bubbles[i].top+bubbles[i].myheight/2));
-        	    df.normalize();
-        	    bubbles[i].f.addEquals(df.mult(5*this.damping));
-        	    bubbles[i].moveBy(bubbles[i].f);
+        for(var i=0;i<this.bubbles.length;i++){
+            // add friction
+            bubbles[i].v.multEquals(0.9);
+            // do the move
+            bubbles[i].moveBy(bubbles[i].v);
         }
         
         this.damping *= 0.98;
